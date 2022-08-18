@@ -2,25 +2,34 @@ use crate::{domain::{Trade, Wallet, DollarsPerBitcoin}, strategies::operators::{
 
 use super::Strategy;
 
-#[derive(Default)]
-pub struct OnEveryChange<const RATIO: i32 = 50> {
+pub struct OnEveryChange {
     last_val: DollarsPerBitcoin,
+    exchange_ratio: f32,
 }
 
-impl<const RATIO: i32> Strategy for OnEveryChange<RATIO> {
+impl OnEveryChange {
+    pub fn new(exchange_ratio: f32) -> Self {
+        debug_assert!(exchange_ratio > 0.);
+        debug_assert!(exchange_ratio <= 100.); 
+        Self { 
+            last_val: Default::default(), 
+            exchange_ratio,
+        } 
+    } 
+}
+
+impl Strategy for OnEveryChange {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {
-        debug_assert!(RATIO > 0);
-        debug_assert!(RATIO < 100);
         if self.last_val == DollarsPerBitcoin::default() {
             self.last_val = current_btc;
             return None;
         }
         if self.last_val < current_btc {
             self.last_val = current_btc;
-            Some(trade::<RATIO>(&wallet, Action::Sell))
+            Some(trade(self.exchange_ratio, &wallet, Action::Sell))
         } else {
             self.last_val = current_btc;
-            Some(trade::<RATIO>(&wallet, Action::Buy))
+            Some(trade(self.exchange_ratio, &wallet, Action::Buy))
         }
     }
 }
@@ -33,7 +42,7 @@ mod tests {
 
     #[test]
     fn should_apply_if_current_is_higer_than_last() {
-        let mut sut: OnEveryChange<25> = OnEveryChange::default();
+        let mut sut = OnEveryChange::new(0.25);
         let wallet = Wallet::test_wallet();
 
         assert!(sut.apply(&wallet, DollarsPerBitcoin::from(5.)).is_none());

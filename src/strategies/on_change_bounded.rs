@@ -2,35 +2,42 @@ use crate::domain::{Trade, Wallet, DollarsPerBitcoin};
 
 use super::{Strategy, operators::{self, trade, Action}};
 
-/// EXCHANGE_RATIO = how much of the current wallet to transfer
-/// IMPULS_RATIO = threshold described as last / current that if crossed triggers exchange
-/// last = 10 impuls = 25 then ratio = 25 / 100 = 0.25; difference = 10 * 0.25 = 2.5;
-/// if current < 7.5 buy btc / if current > 12.5 sell
-#[derive(Default)]
-pub struct OnChangeBounded<
-    const EXCHANGE_RATIO: i32 = 50,
-    const IMPULS_RATIO: i32 = 10,
-> {
+pub struct OnChangeBounded {
     last_val: DollarsPerBitcoin,
+    exchange_ratio: f32,
+    impuls_ratio: f32,
 }
 
-impl<const EXCHANGE_RATIO: i32, const IMPULS_RATIO: i32> Strategy
-    for OnChangeBounded<EXCHANGE_RATIO, IMPULS_RATIO>
+impl OnChangeBounded {
+    /// EXCHANGE_RATIO = how much of the current wallet to transfer
+    /// IMPULS_RATIO = threshold described as last / current that if crossed triggers exchange
+    /// last = 10 impuls = 25 then ratio = 25 / 100 = 0.25; difference = 10 * 0.25 = 2.5;
+    /// if current < 7.5 buy btc / if current > 12.5 sell
+    pub fn new(exchange_ratio: f32, impuls_ratio: f32) -> Self {
+        Self { 
+            last_val: Default::default(), 
+            exchange_ratio,
+            impuls_ratio, 
+        }
+    }
+}
+
+impl Strategy for OnChangeBounded
 {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {
         if self.last_val == DollarsPerBitcoin::default() {
             self.last_val = current_btc;
             return None;
         }
-        match operators::impuls::<IMPULS_RATIO>(self.last_val, current_btc) {
+        match operators::impuls(self.impuls_ratio, self.last_val, current_btc) {
             Action::DoNothing => None,
             Action::Buy => {
                 self.last_val = current_btc;
-                Some(trade::<EXCHANGE_RATIO>(&wallet, Action::Buy))
+                Some(trade(self.exchange_ratio, &wallet, Action::Buy))
             },
             Action::Sell => {
                 self.last_val = current_btc;
-                Some(trade::<EXCHANGE_RATIO>(&wallet, Action::Sell))
+                Some(trade(self.exchange_ratio, &wallet, Action::Sell))
             },
         }
     }
@@ -44,7 +51,7 @@ mod tests {
 
     #[test]
     fn should_trigger_with_exchange_ratio() {
-        let mut sut: OnChangeBounded<10, 25> = OnChangeBounded::default();
+        let mut sut = OnChangeBounded::new(0.1, 0.25);
         let wallet = Wallet::test_wallet();
 
         assert!(sut.apply(&wallet, DollarsPerBitcoin::from(10.)).is_none());

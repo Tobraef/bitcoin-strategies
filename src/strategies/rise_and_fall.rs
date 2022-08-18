@@ -2,21 +2,30 @@ use crate::domain::DollarsPerBitcoin;
 
 use super::{buffer::Buffer, Strategy, operators::{trade, Action}};
 
-#[derive(Default)]
-pub struct RiseAndFall<const EXCHANGE: i32, const BUFFER: usize> {
+pub struct RiseAndFall<const BUFFER: usize> {
     buffer: Buffer<DollarsPerBitcoin, BUFFER>,
+    exchange_ratio: f32,
 }
 
-impl<const EXCHANGE: i32, const N: usize> Strategy for RiseAndFall<EXCHANGE, N> {
+impl<const N: usize> RiseAndFall<N> {
+    pub fn new(exchange_ratio: f32) -> Self {
+        Self {
+            buffer: Default::default(),
+            exchange_ratio,
+        }
+    }
+}
+
+impl<const N: usize> Strategy for RiseAndFall<N> {
     fn apply(&mut self, wallet: &crate::domain::Wallet, current_btc: DollarsPerBitcoin) -> Option<crate::domain::Trade> {
         self.buffer.push(current_btc);
         if self.buffer.iter().count() != N {
             return None
         }
         if is_on_rise(self.buffer.iter()) {
-            Some(trade::<EXCHANGE>(&wallet, Action::Sell))
+            Some(trade(self.exchange_ratio, &wallet, Action::Sell))
         } else if is_on_fall(self.buffer.iter()) {
-            Some(trade::<EXCHANGE>(&wallet, Action::Buy))
+            Some(trade(self.exchange_ratio, &wallet, Action::Buy))
         } else {
             None
         }
@@ -79,7 +88,7 @@ mod tests {
 
     #[test]
     fn should_perform_on_steady_rise_or_fall() {
-        let mut sut = RiseAndFall::<10, 3>::default();
+        let mut sut = RiseAndFall::<3>::new(0.1);
         let wallet = Wallet::test_wallet();
 
         assert!(matches!(sut.apply(&wallet, DollarsPerBitcoin::from(3.)), None));

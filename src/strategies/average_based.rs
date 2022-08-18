@@ -3,17 +3,29 @@ use crate::domain::{Wallet, DollarsPerBitcoin, Trade};
 use super::{buffer::Buffer, Strategy, operators::{impuls, Action, trade}};
 
 #[derive(Default)]
-pub struct AverageBased<const BUFFER_SIZE: usize, const IMPULS_RATIO: i32, const EXCHANGE_RATIO: i32> {
+pub struct AverageBased<const BUFFER_SIZE: usize> {
     buffer: Buffer<DollarsPerBitcoin, BUFFER_SIZE>,
+    impuls_ratio: f32,
+    exchange_ratio: f32,
 }
 
-impl<const N: usize, const IMPULS: i32, const EXCHANGE: i32> Strategy for AverageBased<N, IMPULS, EXCHANGE> {
+impl<const N: usize> AverageBased<N> {
+    pub fn new(impuls_ratio: f32, exchange_ratio: f32) -> Self {
+        Self {
+            impuls_ratio,
+            exchange_ratio,
+            buffer: Buffer::default(),
+        }
+    }
+}
+
+impl<const N: usize> Strategy for AverageBased<N> {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {
         self.buffer.push(current_btc);
         let avg = average(self.buffer.iter());
-        match impuls::<IMPULS>(avg, current_btc) {
+        match impuls(self.impuls_ratio, avg, current_btc) {
             Action::DoNothing => None,
-            e => Some(trade::<EXCHANGE>(&wallet, e)),
+            e => Some(trade(self.exchange_ratio, &wallet, e)),
         }
     }
 }
