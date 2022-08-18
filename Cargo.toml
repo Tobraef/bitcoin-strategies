@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+itertools = "0.10.3"
+derive_more = "0.99.17"
 reqwest = "0.11.11"
 serde = "1"
 #rdkafka = "0.28.0"
