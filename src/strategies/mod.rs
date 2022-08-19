@@ -9,7 +9,7 @@ mod buffer;
 mod operators;
 mod rise_and_fall;
 
-pub trait Strategy {
+pub trait Strategy: ToString {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade>;
 }
 

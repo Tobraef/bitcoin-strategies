@@ -35,6 +35,10 @@ pub fn change_balance(wallet: &mut Wallet, transfer: Trade, price: DollarsPerBit
     validate(wallet)
 }
 
+pub fn total_dollars(wallet: &Wallet, price: DollarsPerBitcoin) -> Dollar {
+    wallet.dollars + (exchange_btc(wallet.btc, price))
+}
+
 impl Wallet {
     #[cfg(test)]
     pub fn test_wallet() -> Wallet {

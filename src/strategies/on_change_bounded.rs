@@ -22,6 +22,12 @@ impl OnChangeBounded {
     }
 }
 
+impl ToString for OnChangeBounded {
+    fn to_string(&self) -> String {
+        format!("On change bounded with {} impuls ratio, {} exchange ratio", self.impuls_ratio, self.exchange_ratio)
+    }
+}
+
 impl Strategy for OnChangeBounded
 {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {

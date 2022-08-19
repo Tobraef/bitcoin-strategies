@@ -16,6 +16,12 @@ impl<const N: usize> RiseAndFall<N> {
     }
 }
 
+impl<const N: usize> ToString for RiseAndFall<N> {
+    fn to_string(&self) -> String {       
+        format!("Rise and fall with {N} buffer size, {} exchange_ratio", self.exchange_ratio)
+    }
+}
+
 impl<const N: usize> Strategy for RiseAndFall<N> {
     fn apply(&mut self, wallet: &crate::domain::Wallet, current_btc: DollarsPerBitcoin) -> Option<crate::domain::Trade> {
         self.buffer.push(current_btc);

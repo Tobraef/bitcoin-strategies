@@ -9,3 +9,5 @@ pub use dollar::Dollar;
 pub use dollars_per_bitcoin::DollarsPerBitcoin;
 pub use trade::Trade;
 pub use wallet::Wallet;
+
+pub use wallet::{change_balance, total_dollars};

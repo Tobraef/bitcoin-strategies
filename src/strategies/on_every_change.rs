@@ -18,6 +18,12 @@ impl OnEveryChange {
     } 
 }
 
+impl ToString for OnEveryChange {
+    fn to_string(&self) -> String {
+        format!("On every change with {} exchange_ratio", self.exchange_ratio)
+    }
+}
+
 impl Strategy for OnEveryChange {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {
         if self.last_val == DollarsPerBitcoin::default() {

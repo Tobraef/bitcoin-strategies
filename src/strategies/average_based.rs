@@ -19,6 +19,12 @@ impl<const N: usize> AverageBased<N> {
     }
 }
 
+impl<const N: usize> ToString for AverageBased<N> {
+    fn to_string(&self) -> String {
+        format!("Average based with {N} buffer size, {} impuls ratio, {} exchange_ratio", self.impuls_ratio, self.exchange_ratio)
+    }
+}
+
 impl<const N: usize> Strategy for AverageBased<N> {
     fn apply(&mut self, wallet: &Wallet, current_btc: DollarsPerBitcoin) -> Option<Trade> {
         self.buffer.push(current_btc);
