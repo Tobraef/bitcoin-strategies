@@ -9,5 +9,5 @@ pub fn exchange_btc(btc: Bitcoin, price: DollarsPerBitcoin) -> Dollar {
 }
 
 pub fn exchange_dollars(dollars: Dollar, price: DollarsPerBitcoin) -> Bitcoin {
-    Bitcoin::from(price.0 / Into::<f32>::into(dollars))
+    Bitcoin::from(Into::<f32>::into(dollars) / price.0)
 }

@@ -1,6 +1,6 @@
 use super::{bitcoin::Bitcoin, dollar::Dollar, trade::Trade, dollars_per_bitcoin::{DollarsPerBitcoin, exchange_btc, exchange_dollars}};
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Wallet {
     pub btc: Bitcoin,
     pub dollars: Dollar,

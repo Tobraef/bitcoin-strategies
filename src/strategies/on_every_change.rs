@@ -42,7 +42,7 @@ impl Strategy for OnEveryChange {
 
 #[cfg(test)]
 mod tests {
-    use crate::{strategies::Strategy, domain::{Wallet, DollarsPerBitcoin}};
+    use crate::{strategies::Strategy, domain::{Wallet, DollarsPerBitcoin, Dollar, Trade, Bitcoin}};
 
     use super::OnEveryChange;
 
@@ -56,5 +56,26 @@ mod tests {
         assert!(Into::<f32>::into(sold_btc) > 0.);
         let sold_dollars = sut.apply(&wallet, DollarsPerBitcoin::from(5.)).unwrap().dollars();
         assert!(Into::<f32>::into(sold_dollars) > 0.);  
+    }
+
+    #[test]
+    fn should_keep_exchanging() {
+        let mut sut = OnEveryChange::new(0.5);
+        let mut wallet = Wallet::test_wallet();
+
+        sut.apply(&wallet, DollarsPerBitcoin::from(10.));
+        let to_trade = sut.apply(&wallet, DollarsPerBitcoin::from(11.)).unwrap();
+        assert_eq!(to_trade.btc(), Bitcoin::from(5.));
+        wallet.btc = wallet.btc - Bitcoin::from(5.);
+        
+        let to_trade = sut.apply(&wallet, DollarsPerBitcoin::from(12.)).unwrap();
+        assert_eq!(to_trade.btc(), Bitcoin::from(2.5));
+        wallet.btc = wallet.btc - Bitcoin::from(2.5);
+        
+        let to_trade = sut.apply(&wallet, DollarsPerBitcoin::from(13.)).unwrap();
+        assert_eq!(to_trade.btc(), Bitcoin::from(1.25));
+        wallet.btc = wallet.btc - Bitcoin::from(1.25);
+
+        assert_eq!(wallet.btc, Bitcoin::from(1.25));
     }
 }

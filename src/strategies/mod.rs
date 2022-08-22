@@ -14,7 +14,7 @@ pub trait Strategy: ToString {
 }
 
 pub fn create_strategies() -> Vec<Box<dyn Strategy>> {
-    let ratios = || (1..=20).map(|n| n as f32 / 10.);
+    let ratios = || (1..=10).map(|n| n as f32 / 10.);
     let ratios = ratios().map(|r| (r, ratios()));
     let mut result: Vec<Box<dyn Strategy>> = vec![];
     for (exchange_ratio, impuls_ratios) in ratios {

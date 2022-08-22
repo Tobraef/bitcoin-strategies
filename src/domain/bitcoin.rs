@@ -1,6 +1,6 @@
 use derive_more::*;
 
-#[derive(Clone, Copy, Default, PartialEq, PartialOrd, Add, Mul, Div, Sub, From, Into)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Add, Mul, Div, Sub, From, Into)]
 pub struct Bitcoin(f32);
 
 impl AsRef<f32> for Bitcoin {
