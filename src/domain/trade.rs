@@ -1,5 +1,8 @@
+use serde::{Serialize, Deserialize};
+
 use super::{bitcoin::Bitcoin, dollar::Dollar};
 
+#[derive(Serialize, Deserialize)]
 pub enum Trade {
     Bitcoins(Bitcoin),
     Dollars(Dollar),

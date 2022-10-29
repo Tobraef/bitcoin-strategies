@@ -2,47 +2,41 @@ mod communication;
 mod domain;
 mod strategies;
 
-use domain::{DollarsPerBitcoin, Wallet, Bitcoin, Dollar, change_balance, total_dollars};
+use domain::{DollarsPerBitcoin, Actor};
 use log::info;
-use strategies::{create_strategies, Strategy};
-use communication::get_bitcoin_value_usd;
+use strategies::create_strategies;
+use communication::{get_bitcoin_value_usd, init_accounts, send_transactions};
 
-struct Node {
-    wallet: Wallet,
-    strategy: Box<dyn Strategy>,
-}
+use crate::domain::TradeRequest;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::builder()
-        .filter(None, log::LevelFilter::Info)
+        .filter_level(log::LevelFilter::Info)
         .build();
-    let wallet_factory = || {
-        let mut w = Wallet::default();
-        w.btc = Bitcoin::from(1.);
-        w.dollars = Dollar::from(10_000.);
-        w
-    };
     let strategies = create_strategies();
-    let mut nodes: Vec<_> = strategies
+    let mut actors: Vec<_> = init_accounts(strategies.len() as u32)
+        .await?
         .into_iter()
-        .map(|s| Node { strategy: s, wallet: wallet_factory() })
+        .zip(strategies.into_iter())
+        .map(|(init_resp, strategy)| Actor::new(init_resp.id, strategy, init_resp.wallet))
         .collect();
-    for _ in 0..5 {
+    loop {
         let current_btc = DollarsPerBitcoin::from(get_bitcoin_value_usd().await?);
         info!("Current BTC: {:?}", current_btc);
-        for node in nodes.iter_mut() {
-            if let Some(trade) = node.strategy.apply(&node.wallet, current_btc) {
-                change_balance(&mut node.wallet, trade, current_btc);
-                info!("Wallet: {:?}", node.wallet);
+        let trade_requests = actors
+            .iter_mut()
+            .filter_map(|a| a.strategy.apply(&a.wallet, current_btc).map(|r| TradeRequest::new(a.id, r)))
+            .collect();
+        let new_wallets = send_transactions(trade_requests)
+            .await?;
+        for new_wallet in new_wallets {
+            if let Some(actor) = actors.iter_mut().find(|a| a.id == new_wallet.actor_id) {
+                actor.wallet = new_wallet.wallet;
+            } else {
+                log::error!("Received wallet that doesn't belong to any actor. Id: {}", new_wallet.actor_id);
             }
         }
-        tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
     }
-    let current_btc = DollarsPerBitcoin::from(get_bitcoin_value_usd().await?);
-
-    for node in nodes {
-        info!("{} ended up with {}$", node.strategy.to_string(), *total_dollars(&node.wallet, current_btc).as_ref());
-    }
-    Ok(())
 }

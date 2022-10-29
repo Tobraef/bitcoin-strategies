@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 derive_more = "0.99.17"
-reqwest = "0.11.11"
-serde = "1"
+reqwest = { version = "0.11.11", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
 #rdkafka = "0.28.0"
 anyhow = "1"
 env_logger = "0.9.0"
